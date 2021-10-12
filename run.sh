@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=7 python3 main.py --admm-train --config-file config_resnet18_0.9
