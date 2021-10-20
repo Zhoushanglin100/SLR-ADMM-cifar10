@@ -505,7 +505,7 @@ def main():
                         os.remove(
                             f"{args.save_dir}/{args.arch}/{args.optimization}/_train/{old_file}"
                         )
-                    
+
                     ### save new one
                     best_prec1 = max(prec1, best_prec1)
                     model_best = model
@@ -515,10 +515,10 @@ def main():
                         + f"_train/cifar10_{args.arch}_{best_prec1}_"
                         + f"{args.config_file}_{args.sparsity_type}{args.ext}.pt"
                     )
-                    
+
                     if has_wandb:
                         wandb.log({"best_prec1": best_prec1})
-            
+
                 if args.optimization == "savlr":
                     print("Condition 1")
                     print(ADMM.condition1)
@@ -554,6 +554,8 @@ def main():
 
                 if not os.path.exists(args.save_dir + "/results"):
                     os.makedirs(args.save_dir + "/results")
+
+                # TODO: Change into `with-open-as` idiomatic python below
                 f = open(args.save_dir + "/results/test_acc.pkl", "wb")
                 pickle.dump(test_acc, f)
                 f.close()
@@ -575,14 +577,9 @@ def main():
                     f = open(args.save_dir + "/results/condition.pkl", "wb")
                     pickle.dump(condition_d, f)
                     f.close()
-    """================"""
-    """End ADMM retrain"""
-    """================"""
+    # End ADMM train
 
-    """================"""
-    """ Masked retrain """
-    """================"""
-
+    # Start masked retrain
     if args.masked_retrain:
 
         if has_wandb == False:
@@ -593,7 +590,8 @@ def main():
         # load admm trained model
         print("\n---------------> Loading slr trained file...")
 
-        filename_slr = args.save_dir + "{}/{}_train/cifar10_{}_{}_{}_{}{}.pt".format(
+        filename_slr = "{}{}/{}_train/cifar10_{}_{}_{}_{}{}.pt".format(
+            args.save_dir,
             args.arch,
             args.optimization,
             args.arch,
@@ -602,6 +600,7 @@ def main():
             args.sparsity_type,
             args.ext,
         )
+
         print("!!! Loaded File: ", filename_slr)
         model.load_state_dict(torch.load(filename_slr))
         model.cuda()
@@ -609,16 +608,19 @@ def main():
         print("\n---------------> Accuracy before hardpruning")
         pred_orig = test(args, model, device, test_loader)
         logging.info("Accuracy before hardpruning: " + str(float(pred_orig)))
+
         if has_wandb:
             wandb.log({"retrain_test_acc": pred_orig})
         else:
             retrain_acc.append(pred_orig)
+
         ADMM = admm.ADMM(
             args,
             model,
             file_name="profile/" + args.config_file + ".yaml",
             rho=initial_rho,
         )
+
         admm.hard_prune(args, ADMM, model)
         compression = admm.test_sparsity(args, ADMM, model)
         logging.info("Compression rate: " + str(compression))
@@ -661,29 +663,19 @@ def main():
                     args.sparsity_type,
                     args.ext,
                 )
-                if os.path.exists(
-                    args.save_dir
-                    + args.arch
-                    + "/"
-                    + args.optimization
-                    + "_retrain/"
-                    + old_file
-                ):
-                    os.remove(
-                        args.save_dir
-                        + args.arch
-                        + "/"
-                        + args.optimization
-                        + "_retrain/"
-                        + old_file
-                    )
+
+                # TODO: Better variable name for this file to check for?
+                file_to_check = f"{args.save_dir}{args.arch}/{args.optimization}_retrain/{old_file}"
+                if os.path.exists(file_to_check):
+                    os.remove(file_to_check)
+
                 ### save new one
                 best_rt = max(prec_rt, best_rt)
                 model_best = model
                 torch.save(
                     model_best.state_dict(),
-                    args.save_dir
-                    + "{}/{}_retrain/cifar10_{}_{}_{}_{}{}.pt".format(
+                    "{}{}/{}_retrain/cifar10_{}_{}_{}_{}{}.pt".format(
+                        args.save_dir,
                         args.arch,
                         args.optimization,
                         args.arch,
@@ -695,6 +687,7 @@ def main():
                 )
                 if has_wandb:
                     wandb.log({"best_retrain_acc": best_rt})
+
             for k, v in idx_loss_dict.items():
                 epoch_loss.append(float(v))
             epoch_loss = np.sum(epoch_loss) / len(epoch_loss)
@@ -709,9 +702,7 @@ def main():
 
         print("Best Acc: {:.4f}".format(best_prec1))
         logging.info("Best accuracy: " + str(best_prec1))
-    """=============="""
-    """masked retrain"""
-    """=============="""
+    # end masked retrain
 
 
 if __name__ == "__main__":
