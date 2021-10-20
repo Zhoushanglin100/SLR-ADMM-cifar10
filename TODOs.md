@@ -7,7 +7,5 @@ TODOS:
 5. Replace all `.txt` with `.md`
 
 For `main.py`:
-    0. f-string all the strings
-    1. Move argparse, etc. to `__main__`
-    2. Pass args to `main(...)`.
-    3. Properly handle files using `with-open-as`
+    0. `args` definition for `main(...)`, etc.
+    1. Properly handle files using `with-open-as`

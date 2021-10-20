@@ -5,10 +5,8 @@ import pickle
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torchvision import datasets, transforms
 
 import slr.admm as admm
 from model.resnet import resnet18
@@ -104,7 +102,7 @@ def train(args, ADMM, model, device, train_loader, optimizer, epoch, writer):
     return mixed_loss_sum, loss
 
 
-def test(args, model, device, test_loader):
+def test(model, device, test_loader):
 
     model.eval()
     test_loss = 0
@@ -148,7 +146,7 @@ def get_sorted_list_of_params(model):
     return np.sort(np.concatenate(param_arrays))
 
 
-def main():
+def main(args):
 
     logging.info("Optimization: " + args.optimization)
     logging.info("Epochs: " + str(args.epochs))
@@ -176,7 +174,7 @@ def main():
     #     print(i, "th weight:", name, ", shape = ", W.shape, ", weight.dtype = ", W.dtype)
 
     # define loss function (criterion) and pptimizer
-    criterion = nn.CrossEntropyLoss().cuda()
+    # criterion = nn.CrossEntropyLoss().cuda()  # unused variable
 
     if args.optimizer_type == "sgd":
         optimizer = torch.optim.SGD(
@@ -200,7 +198,7 @@ def main():
     initial_rho = args.rho
     if args.admm_train:
 
-        if has_wandb == False:
+        if not has_wandb:
             condition_d = {}
             mixed_losses = []
             ce_loss = []
@@ -313,7 +311,7 @@ def main():
                     print("Condition 2")
                     print(ADMM.condition2)
 
-                    if has_wandb == False:
+                    if not has_wandb:
                         condition_d["Condition1"] = (
                             condition_d.get("Condition1", []) + ADMM.condition1
                         )
@@ -338,7 +336,7 @@ def main():
             )
 
             ### save result
-            if has_wandb == False:
+            if not has_wandb:
 
                 if not os.path.exists(args.save_dir + "/results"):
                     os.makedirs(args.save_dir + "/results")
@@ -692,5 +690,5 @@ if __name__ == "__main__":
         wandb.init(config=args)
         wandb.config.update(args)
     
-    main()
+    main(args=args)
 
