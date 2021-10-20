@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import pickle
 
@@ -21,220 +22,11 @@ try:
 except ImportError:
     has_wandb = False
 
-import logging
 
 LOG_FILENAME = "output.log"
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
-
 writer = None
 # os.environ['CUDA_VISIBLE_DEVICES'] ='0'
-
-torch.cuda.empty_cache()
-
-########################################################################################
-
-### Training settings
-# TODO:
-#   1. Move argparse to __main__
-#   2. Pass args to main()
-parser = argparse.ArgumentParser(description="PyTorch CIFAR10 Example")
-parser.add_argument(
-    "--arch",
-    "-a",
-    metavar="ARCH",
-    default="resnet18",
-    help="model architecture (default: resnet18)",
-)
-parser.add_argument("--seed", type=int, default=1, metavar="N", help="")
-parser.add_argument(
-    "--batch-size",
-    type=int,
-    default=64,
-    metavar="N",
-    help="input batch size for training (default: 64)",
-)
-parser.add_argument(
-    "--test-batch-size",
-    type=int,
-    default=1000,
-    metavar="N",
-    help="input batch size for testing (default: 1000)",
-)
-parser.add_argument(
-    "--epochs",
-    type=int,
-    default=100,
-    metavar="N",
-    help="number of epochs to train (default: 10)",
-)
-
-parser.add_argument(
-    "--max-step",
-    type=int,
-    default=6000,
-    metavar="N",
-    help="number of max step to train (default: 6000)",
-)
-parser.add_argument(
-    "--lr", type=float, default=0.01, metavar="LR", help="learning rate (default: 0.01)"
-)
-parser.add_argument(
-    "--lr-scheduler", type=str, default="cosine", help="[default, cosine]"
-)
-parser.add_argument(
-    "--lr-decay",
-    type=int,
-    default=30,
-    metavar="LR",
-    help="how many every epoch before lr drop (default: 30)",
-)
-parser.add_argument(
-    "--momentum",
-    type=float,
-    default=0.5,
-    metavar="M",
-    help="SGD momentum (default: 0.5)",
-)
-parser.add_argument(
-    "--weight-decay",
-    type=float,
-    default=5e-4,
-    metavar="M",
-    help="Optimizer weight decay (default: 0.0001)",
-)
-parser.add_argument(
-    "--no-cuda", action="store_true", default=False, help="disables CUDA training"
-)
-parser.add_argument(
-    "--log-interval",
-    type=int,
-    default=100,
-    metavar="N",
-    help="how many batches to wait before logging training status",
-)
-parser.add_argument(
-    "--save-dir",
-    type=str,
-    default="./ckpts",
-    metavar="N",
-    help="Directory to save checkpoints",
-)
-parser.add_argument(
-    "--baseline-model",
-    type=str,
-    default="resnet18.pt",
-    metavar="N",
-    help="For loading the model",
-)
-parser.add_argument(
-    "--verbose",
-    action="store_true",
-    default=False,
-    help="whether to report admm convergence condition",
-)
-parser.add_argument(
-    "--evaluate",
-    action="store_true",
-    default=False,
-    help="Just run inference and evaluate on test dataset",
-)
-parser.add_argument(
-    "--optimizer-type",
-    type=str,
-    default="sgd",
-    help="choose optimizer type: [sgd, adam]",
-)
-parser.add_argument(
-    "--logger", action="store_true", default=False, help="whether to use logger"
-)
-
-# -------------------- SLR Parameter ---------------------------------
-
-parser.add_argument(
-    "--admm-train",
-    action="store_true",
-    default=False,
-    help="Choose admm quantization training",
-)
-parser.add_argument(
-    "--masked-retrain",
-    action="store_true",
-    default=False,
-    help="whether to masked training for admm quantization",
-)
-parser.add_argument(
-    "--optimization", type=str, default="savlr", help="optimization type: [savlr, admm]"
-)
-parser.add_argument(
-    "--admm-epochs",
-    type=int,
-    default=10,
-    metavar="N",
-    help="number of interval epochs to update admm (default: 1)",
-)
-parser.add_argument(
-    "--retrain-epoch", type=int, default=50, metavar="N", help="for retraining"
-)
-parser.add_argument(
-    "--combine-progressive",
-    action="store_true",
-    default=False,
-    help="for filter pruning after column pruning",
-)
-
-parser.add_argument("--M", type=int, default=300, metavar="N", help="SLR parameter M ")
-parser.add_argument(
-    "--r", type=float, default=0.1, metavar="N", help="SLR parameter r "
-)
-parser.add_argument(
-    "--initial-s",
-    type=float,
-    default=0.01,
-    metavar="N",
-    help="SLR parameter initial stepsize",
-)
-parser.add_argument("--rho", type=float, default=0.1, help="define rho for ADMM")
-parser.add_argument(
-    "--rho-num", type=int, default=1, help="define how many rohs for ADMM training"
-)
-
-parser.add_argument(
-    "--config-file", type=str, default="config_resnet18_0.9", help="prune config file"
-)
-parser.add_argument(
-    "--sparsity-type",
-    type=str,
-    default="pattern",
-    help="sparsity type: [irregular,column,channel,filter,pattern,random-pattern]",
-)
-parser.add_argument(
-    "--admmtrain-acc",
-    type=float,
-    default=76.08,
-    metavar="N",
-    help="SLR trained best acc for saved model",
-)
-parser.add_argument(
-    "-p",
-    "--print-freq",
-    default=100,
-    type=int,
-    metavar="N",
-    help="print frequency (default: 10)",
-)
-
-parser.add_argument(
-    "--ext", type=str, default="", metavar="N", help="extension of file name"
-)
-
-####################################################################################
-
-args, unknown = parser.parse_known_args()
-if has_wandb:
-    wandb.init(config=args)
-    wandb.config.update(args)
-####################################################################################
-
 
 def train(args, ADMM, model, device, train_loader, optimizer, epoch, writer):
 
@@ -354,10 +146,6 @@ def get_sorted_list_of_params(model):
     params = list(model.parameters())
     param_arrays = [param_to_array(param) for param in params]
     return np.sort(np.concatenate(param_arrays))
-
-
-####################################################################################
-# MAIN STARTS HERE:
 
 
 def main():
@@ -582,7 +370,7 @@ def main():
     # Start masked retrain
     if args.masked_retrain:
 
-        if has_wandb == False:
+        if not has_wandb:
             retrain_acc = []
             epoch_loss_dict = []
         print("\n!!!!!!!!!!!!!!!!!!! RETRAIN !!!!!!!!!!!!!!!!!")
@@ -706,5 +494,203 @@ def main():
 
 
 if __name__ == "__main__":
+    torch.cuda.empty_cache()
+
+    # Training settings
+    parser = argparse.ArgumentParser(description="PyTorch CIFAR10 Example")
+    parser.add_argument(
+        "--arch",
+        "-a",
+        metavar="ARCH",
+        default="resnet18",
+        help="model architecture (default: resnet18)",
+    )
+    parser.add_argument("--seed", type=int, default=1, metavar="N", help="")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=64,
+        metavar="N",
+        help="input batch size for training (default: 64)",
+    )
+    parser.add_argument(
+        "--test-batch-size",
+        type=int,
+        default=1000,
+        metavar="N",
+        help="input batch size for testing (default: 1000)",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=100,
+        metavar="N",
+        help="number of epochs to train (default: 10)",
+    )
+
+    parser.add_argument(
+        "--max-step",
+        type=int,
+        default=6000,
+        metavar="N",
+        help="number of max step to train (default: 6000)",
+    )
+    parser.add_argument(
+        "--lr", type=float, default=0.01, metavar="LR", help="learning rate (default: 0.01)"
+    )
+    parser.add_argument(
+        "--lr-scheduler", type=str, default="cosine", help="[default, cosine]"
+    )
+    parser.add_argument(
+        "--lr-decay",
+        type=int,
+        default=30,
+        metavar="LR",
+        help="how many every epoch before lr drop (default: 30)",
+    )
+    parser.add_argument(
+        "--momentum",
+        type=float,
+        default=0.5,
+        metavar="M",
+        help="SGD momentum (default: 0.5)",
+    )
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=5e-4,
+        metavar="M",
+        help="Optimizer weight decay (default: 0.0001)",
+    )
+    parser.add_argument(
+        "--no-cuda", action="store_true", default=False, help="disables CUDA training"
+    )
+    parser.add_argument(
+        "--log-interval",
+        type=int,
+        default=100,
+        metavar="N",
+        help="how many batches to wait before logging training status",
+    )
+    parser.add_argument(
+        "--save-dir",
+        type=str,
+        default="./ckpts",
+        metavar="N",
+        help="Directory to save checkpoints",
+    )
+    parser.add_argument(
+        "--baseline-model",
+        type=str,
+        default="resnet18.pt",
+        metavar="N",
+        help="For loading the model",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="whether to report admm convergence condition",
+    )
+    parser.add_argument(
+        "--evaluate",
+        action="store_true",
+        default=False,
+        help="Just run inference and evaluate on test dataset",
+    )
+    parser.add_argument(
+        "--optimizer-type",
+        type=str,
+        default="sgd",
+        help="choose optimizer type: [sgd, adam]",
+    )
+    parser.add_argument(
+        "--logger", action="store_true", default=False, help="whether to use logger"
+    )
+
+    # SLR parameters
+    parser.add_argument(
+        "--admm-train",
+        action="store_true",
+        default=False,
+        help="Choose admm quantization training",
+    )
+    parser.add_argument(
+        "--masked-retrain",
+        action="store_true",
+        default=False,
+        help="whether to masked training for admm quantization",
+    )
+    parser.add_argument(
+        "--optimization", type=str, default="savlr", help="optimization type: [savlr, admm]"
+    )
+    parser.add_argument(
+        "--admm-epochs",
+        type=int,
+        default=10,
+        metavar="N",
+        help="number of interval epochs to update admm (default: 1)",
+    )
+    parser.add_argument(
+        "--retrain-epoch", type=int, default=50, metavar="N", help="for retraining"
+    )
+    parser.add_argument(
+        "--combine-progressive",
+        action="store_true",
+        default=False,
+        help="for filter pruning after column pruning",
+    )
+
+    parser.add_argument("--M", type=int, default=300, metavar="N", help="SLR parameter M ")
+    parser.add_argument(
+        "--r", type=float, default=0.1, metavar="N", help="SLR parameter r "
+    )
+    parser.add_argument(
+        "--initial-s",
+        type=float,
+        default=0.01,
+        metavar="N",
+        help="SLR parameter initial stepsize",
+    )
+    parser.add_argument("--rho", type=float, default=0.1, help="define rho for ADMM")
+    parser.add_argument(
+        "--rho-num", type=int, default=1, help="define how many rohs for ADMM training"
+    )
+
+    parser.add_argument(
+        "--config-file", type=str, default="config_resnet18_0.9", help="prune config file"
+    )
+    parser.add_argument(
+        "--sparsity-type",
+        type=str,
+        default="pattern",
+        help="sparsity type: [irregular,column,channel,filter,pattern,random-pattern]",
+    )
+    parser.add_argument(
+        "--admmtrain-acc",
+        type=float,
+        default=76.08,
+        metavar="N",
+        help="SLR trained best acc for saved model",
+    )
+    parser.add_argument(
+        "-p",
+        "--print-freq",
+        default=100,
+        type=int,
+        metavar="N",
+        help="print frequency (default: 10)",
+    )
+
+    parser.add_argument(
+        "--ext", type=str, default="", metavar="N", help="extension of file name"
+    )
+
+    
+    args, unknown = parser.parse_known_args()
+    if has_wandb:
+        wandb.init(config=args)
+        wandb.config.update(args)
+    
     main()
 
