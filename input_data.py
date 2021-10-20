@@ -32,7 +32,6 @@ class MNISTDataLoader:
         )
 
 
-# -----------------------------------------------------------------------------------
 class CIFAR10DataLoader:
     def __init__(self, batch_size, test_batch_size, kwargs):
         normalize = transforms.Normalize(
