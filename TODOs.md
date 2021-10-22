@@ -1,10 +1,10 @@
 TODOS:
 
-1. Pylint through all the code
-2. `args.` definition for `admm.py`
+1. Define `args` used in function parameters
 3. Read through `main.py`
-4. `ARCHITECTURE.md`
+4. `ARCHITECTURE.md` and code map
 5. Replace all `.txt` with `.md`
+6. Add docstrings?
 
 For `main.py`:
     0. `args` definition for `main(...)`, etc.
