@@ -1,4 +1,3 @@
-
 seed = 1
 batch = 128
 test_batch = 1000
@@ -32,4 +31,4 @@ admm_epoch = 10 #how often we do admm update
 M = 300
 r = 0.1
 initial_s = 0.01
-     
+
