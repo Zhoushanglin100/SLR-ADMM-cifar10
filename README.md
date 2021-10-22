@@ -37,32 +37,32 @@ See `ARCHITECTURE.md` for more details
 
 ```
 ├── ckpts
+|   │ TODO - Description
 │   ├── baseline
-│   │   └── resnet18.pt
+│   │     TODO - Description  
 │   └── resnet18
+│       │ TODO - Description
 │       └── savlr_train
-│           ├── cifar10_resnet18_87.92_config_resnet18_0.9_pattern.pt
-│           └── cifar10_resnet18_89.69_config_resnet18_0.9_pattern.pt
+│             TODO - Description
+│
 ├── input_data.py
+│     TODO - Description
+│ 
 ├── main.py
+│     TODO - Description
+│
 ├── model
-│   └── resnet.py
+│     TODO - Description
 ├── profile
-│   ├── config_resnet18_0.9.yaml
-│   ├── config_resnet18_v2.yaml
-│   ├── config_resnet18_v4.yaml
-│   ├── config_resnet18_v5.yaml
-│   └── config_resnet18.yaml
-├── README.md
-├── README.txt
+│     TODO - Description
+│
 ├── run.sh
+│     TODO - Description
+│
 ├── slr
-│   ├── admm_old.py
 │   ├── admm.py
-│   ├── parameters.py
 │   └── testers.py
 └── TODOs.md
-
 ```
 
 TODO!
