@@ -61,7 +61,11 @@ See `ARCHITECTURE.md` for more details
 │
 ├── slr
 │   ├── admm.py
+│   │     TODO - Description
+│   │
 │   └── testers.py
+│         TODO - Description
+│
 └── TODOs.md
 ```
 
