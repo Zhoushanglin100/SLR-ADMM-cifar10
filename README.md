@@ -30,11 +30,11 @@ python3 main.py --optimization savlr --admm-train --config-file config_resnet18_
     - M: SLR stepsize-setting parameter M
     - r: SLR stepsize-setting parameter r
     - initial-s: SLR parameter initial stepsize
-    - rho: define rho for ADMM")
-    - rho-num: define how many rohs for ADMM training
+    - rho: define rho
+    - rho-num: define how many rohs
 
 - Parameter for SLR and ADMM both
-    - config-file: help="prune config file")
+    - config-file: prune config file, define pruning layer and compression rate for each layer
     - sparsity-type: choose from [irregular, column, channel, filter, pattern, random-pattern]
 
 
@@ -64,6 +64,7 @@ There is only one step for quantization
 
 ```bash
 python3 main_cifar10_new.py --optimization <optimization method> --admm-quant --load-model-name <pretrained model weight that want to quantize> -a <model architecture> --quant-type <quantization method>
+
 # E.g.:
 python3 main_cifar10_new.py --optimization admm --admm-quant --load-model-name "base/baseline_vgg16.pt" -a vgg16 --quant-type ternary
 
@@ -76,7 +77,7 @@ python3 main_cifar10_new.py --optimization admm --admm-quant --load-model-name "
 
 - Parameter for SLR and ADMM both
     - quant-type: : define sparsity type, choose from  [binary, ternary, fixed, one-size]
-    - num-bits: If use fixed number bits, please set bit length
+    - num-bits: If use fixed and and one-size number bits, please set bit length
     - update-rho: Choose whether to update initial rho in each iteration, 1-update, 0-not update
     - init-rho: initial rho for all layers
 
