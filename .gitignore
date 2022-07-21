@@ -1,6 +1,8 @@
-wandb
-__pycache__
-data
-ckpts
+**/wandb
+**/__pycache__
+**/data
+**/ckpts
 
-output.log
+**/output.log
+
+**/base

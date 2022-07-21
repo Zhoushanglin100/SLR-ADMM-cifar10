@@ -1,0 +1,38 @@
+
+# define prune ratios for your network
+# 46.10 / 1.86x (filter sparsity / weight sparsity)
+prune_ratios:
+   #conv1.weight:
+     #0
+   layer1.0.conv1.weight:
+     0.85
+   layer1.0.conv2.weight:
+     0.85
+   layer1.1.conv1.weight:
+     0.85
+   layer1.1.conv2.weight:
+     0.85
+   layer2.0.conv1.weight:
+     0.85
+   layer2.0.conv2.weight:
+     0.85
+   layer2.1.conv1.weight:
+     0.85
+   layer2.1.conv2.weight:
+     0.85
+   layer3.0.conv1.weight:
+     0.85
+   layer3.0.conv2.weight:
+     0.85
+   layer3.1.conv1.weight:
+     0.85
+   layer3.1.conv2.weight:
+     0.85
+   layer4.0.conv1.weight:
+     0.85
+   layer4.0.conv2.weight:
+     0.85
+   layer4.1.conv1.weight:
+     0.85
+   layer4.1.conv2.weight:
+     0.85
