@@ -47,7 +47,7 @@ python3 main.py --optimization savlr --masked-retrain --admmtrain-acc 76.08 --co
 ```
 
 - Parameter for SLR and ADMM both
-    - admmtrain-acc: SLR/ADMM trained best acc for saved model')
+    - admmtrain-acc: SLR/ADMM trained best acc for saved model
 
 
 **Run detail: check run.sh**
@@ -77,7 +77,7 @@ python3 main_cifar10_new.py --optimization admm --admm-quant --load-model-name "
 
 - Parameter for SLR and ADMM both
     - quant-type: : define sparsity type, choose from  [binary, ternary, fixed, one-size]
-    - num-bits: If use fixed and and one-size number bits, please set bit length
+    - num-bits: If use fixed or one-size number bits, please set bit length
     - update-rho: Choose whether to update initial rho in each iteration, 1-update, 0-not update
     - init-rho: initial rho for all layers
 
