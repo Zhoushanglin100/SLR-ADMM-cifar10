@@ -20,10 +20,10 @@ admm_train: flag for performing admm/slr training
 
 ### Step 1: Admm / SLR Training
 ```bash
-python3 main.py --optimization <optimization method> --admm-train --config-file <config file>
+python3 main.py --optimization <optimization method> --admm-train --config-file <config file> --sparsity-type <pruning type>
 
-# e.g.: choose SLR optimization method, train model with each layer has compression rate being 0.9
-python3 main.py --optimization savlr --admm-train --config-file config_resnet18_0.9
+# E.g.: choose SLR optimization method, train model use irregular pruning with each layer has compression rate being 0.9
+python3 main.py --optimization savlr --admm-train --config-file config_resnet18_0.9 --sparsity-type irregular
 ```
 
 - Some specific parameters for SLR:
@@ -37,13 +37,16 @@ python3 main.py --optimization savlr --admm-train --config-file config_resnet18_
     - config-file: prune config file, define pruning layer and compression rate for each layer
     - sparsity-type: choose from [irregular, column, channel, filter, pattern, random-pattern]
 
+- Baseline model (put it under **ckpts/baseline/** folder)
+    - [resnet18](https://drive.google.com/file/d/1jhNKGGGzZXh9ILKF0ylXlEapsgpUvBCW/view?usp=sharing)
+
 
 ### Step 2: run maked retrain
 ```bash
-python3 main.py --optimization <optimization method> --masked-retrain --admmtrain-acc <previous admm/slr trained best acc> --config-file <config file>
+python3 main.py --optimization <optimization method> --masked-retrain --admmtrain-acc <previous admm/slr trained best acc> --config-file <config file> --sparsity-type <pruning type>
 
 # E.g.: 
-python3 main.py --optimization savlr --masked-retrain --admmtrain-acc 76.08 --config-file config_resnet18_0.9 
+python3 main.py --optimization savlr --masked-retrain --admmtrain-acc 76.08 --config-file config_resnet18_0.9 --sparsity-type irregular
 ```
 
 - Parameter for SLR and ADMM both
