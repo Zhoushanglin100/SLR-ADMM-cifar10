@@ -426,7 +426,7 @@ def main():
         filename_slr = args.save_dir+"{}/{}_train/cifar10_{}_{}_{}_{}{}.pt".format(args.arch,
                                                                                     args.optimization, 
                                                                                     args.arch,
-                                                                                    best_prec1, 
+                                                                                    args.admmtrain_acc, 
                                                                                     args.config_file, 
                                                                                     args.sparsity_type,
                                                                                     args.ext)
