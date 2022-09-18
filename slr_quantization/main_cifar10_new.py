@@ -315,7 +315,7 @@ def main():
 
 
         # --------------------------------------------------
-        if args.optimization == 'savlr':
+        elif args.optimization == 'savlr':
             # epoch = 0
             # while (iteration[0] < 2*(args.epochs)) and (epoch <= 250):
                 # epoch += 1
