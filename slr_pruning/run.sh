@@ -15,7 +15,7 @@ CUDA_VISIBLE_DEVICES=$1 python3 main.py \
             --batch-size $bz \
             --ext $ext
 
-### Step 2: run maked retrain
+### Step 2: run masked retrain
 ## change @config-file based on needed
 CUDA_VISIBLE_DEVICES=$1 python3 main.py \
             --optimization $optim \
