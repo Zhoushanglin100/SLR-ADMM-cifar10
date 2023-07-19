@@ -2,14 +2,14 @@ import numpy as np
 
 def test_irregular_sparsity(model):
     """
-
-        :param model: saved re-trained model
-        :return:
-        """
+    :param model: saved re-trained model
+    :return:
+    """
 
     total_zeros = 0
     total_nonzeros = 0
 
+    print("-----------> check irregular sparsity <-----------")
     for name, weight in model.named_parameters():
         if "bias" in name:
             continue
@@ -22,8 +22,10 @@ def test_irregular_sparsity(model):
         print("irregular zeros: {}, irregular sparsity is: {:.4f}".format(zeros, zeros / (zeros + non_zero)))
 
     print("---------------------------------------------------------------------------")
-    print("total number of zeros: {}, non-zeros: {}, zero sparsity is: {:.4f}".format(
-        total_zeros, total_nonzeros, total_zeros / (total_zeros + total_nonzeros)))
+    print("total number of zeros: {}, non-zeros: {}, zero sparsity is: {:.4f}, comparsion ratio is: {:.4f}".format(
+                        total_zeros, total_nonzeros, 
+                        total_zeros / (total_zeros + total_nonzeros), 
+                        (total_zeros+total_nonzeros) / total_nonzeros))
     print("only consider conv layers, compression rate is: {:.4f}".format(
         (total_zeros+total_nonzeros) / total_nonzeros))
     print("===========================================================================\n\n")
@@ -31,7 +33,6 @@ def test_irregular_sparsity(model):
 
 def test_column_sparsity(model):
     """
-
     :param model: saved re-trained model
     :return:
     """
@@ -42,6 +43,7 @@ def test_column_sparsity(model):
     total_column = 0
     total_empty_column = 0
 
+    print("-----------> check column sparsity <-----------")
     for name, weight in model.named_parameters():
         if(len(weight.size()) == 4): # only consider conv layers
             zeros = np.sum(weight.cpu().detach().numpy() == 0)
@@ -152,11 +154,10 @@ def calculate_unused_weight(model):
 
 def test_chanel_sparsity(model):
     """
-
     :param model: saved re-trained model
     :return:
     """
-
+    print("-----------> check channel sparsity <-----------")
     for name, weight in model.named_parameters():
         if(len(weight.size()) == 4):
             weight2d = weight.reshape(weight.shape[0], weight.shape[1] , -1)
@@ -177,16 +178,13 @@ def test_chanel_sparsity(model):
                 almost_empty_channel, weight2d.size()[1], 100.0 * almost_empty_channel / weight2d.size()[1]))
 
 
-
-
-
-
 def test_filter_sparsity(model):
     """
-
     :param model: saved re-trained model
     :return:
     """
+
+    print("-----------> check filter sparsity <-----------")
 
     total_zeros = 0
     total_nonzeros = 0
