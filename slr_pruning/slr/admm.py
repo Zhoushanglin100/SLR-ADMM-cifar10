@@ -75,7 +75,7 @@ class ADMM: #ADMM class (but also used for SLR training)
             raise Exception("filename must be a str")
         with open(config, "r") as stream:
             try:
-                raw_dict = yaml.load(stream)
+                raw_dict = yaml.safe_load(stream)
                 self.prune_ratios = raw_dict['prune_ratios']
                 for k, v in self.prune_ratios.items():
                     self.rhos[k] = self.rho
@@ -379,10 +379,14 @@ def test_sparsity(args, ADMM, model):
             total_zeros += zeros
             nonzeros = np.sum(W != 0)
             total_nonzeros += nonzeros
-            # print("sparsity at layer {} is {}".format(name, float(zeros) / (float(zeros + nonzeros))))
+            print("Sparsity at layer {} | Weights: {:.0f}, Weights after pruning: {:.0f}, %: {:.3f}, sparsity: {:.3f}".format(name, 
+                                                                float(zeros + nonzeros), float(nonzeros), 
+                                                                float(nonzeros) / (float(zeros + nonzeros)),
+                                                                float(zeros) / (float(zeros + nonzeros))))
         total_weight_number = total_zeros + total_nonzeros
         print('overal compression rate is {}'.format(float(total_weight_number) / float(total_nonzeros)))
         compression = float(total_weight_number) / float(total_nonzeros)
+        print("!!!!!!!!!!!! Compression Total| total weights: {:.0f}, total nonzeros: {:.0f}".format(total_weight_number, total_nonzeros))
 
     elif args.sparsity_type == "column":
         for i, (name, W) in enumerate(model.named_parameters()):
@@ -511,7 +515,7 @@ def z_u_update(args, ADMM, model, device, train_loader, optimizer, epoch, data, 
             pow = 1 - (1/(ADMM.k**args.r))
             alpha = 1 - (1/(args.M*(ADMM.k**pow)))
             
-            if has_wandb:
+            if has_wandb and args.enable_wandb:
                 wandb.log({"Hyper/alpha_slr": alpha})
 
             total_n1 = 0
@@ -533,7 +537,7 @@ def z_u_update(args, ADMM, model, device, train_loader, optimizer, epoch, data, 
 
             satisfied1 = Lagrangian1(ADMM, model) #check if surrogate optimality condition is satisfied.
 
-            if has_wandb:
+            if has_wandb and args.enable_wandb:
                 wandb.log({"condition/Condition1": satisfied1})
             # else:
             #     condition_d["Condition1"] = condition_d.get("Condition1", [])+satisfied1
@@ -547,7 +551,7 @@ def z_u_update(args, ADMM, model, device, train_loader, optimizer, epoch, data, 
                     print("savlr s:")
                     print(ADMM.s)
                     
-                    if has_wandb:
+                    if has_wandb and args.enable_wandb:
                         wandb.log({"Hyper/savlr_s": ADMM.s})
 
                 for i, (name, W) in enumerate(model.named_parameters()):
@@ -605,7 +609,7 @@ def z_u_update(args, ADMM, model, device, train_loader, optimizer, epoch, data, 
                
 
             satisfied2 = Lagrangian2(ADMM, model) #check if surrogate optimality condition is satisfied.
-            if has_wandb:
+            if has_wandb and args.enable_wandb:
                 wandb.log({"condition/Condition2": satisfied2})
             # else:
             #     condition_d["Condition2"] = condition_d.get("Condition2", [])+satisfied2
@@ -618,7 +622,7 @@ def z_u_update(args, ADMM, model, device, train_loader, optimizer, epoch, data, 
                 pow = 1 - (1/(ADMM.k**args.r))
                 alpha = 1 - (1/(args.M*(ADMM.k**pow))) 
                 
-                if has_wandb:
+                if has_wandb and args.enable_wandb:
                     wandb.log({"Hyper/alpha_slr": alpha})
 
                 ADMM.k += 1 #increase k
@@ -628,7 +632,7 @@ def z_u_update(args, ADMM, model, device, train_loader, optimizer, epoch, data, 
                     print("savlr s:")
                     print(ADMM.s)
                     
-                    if has_wandb:
+                    if has_wandb and args.enable_wandb:
                         wandb.log({"Hyper/savlr_s": ADMM.s})
                 
                 for i, (name, W) in enumerate(model.named_parameters()):
@@ -1005,7 +1009,7 @@ def admm_masked_train(args, ADMM, model, device, train_loader, optimizer, epoch)
 
     return lossadmm, mixed_loss_sum, loss
 
-def combined_masked_retrain(args, ADMM, model, device, train_loader, optimizer, epoch):
+def combined_masked_retrain(args, ADMM, model, device, train_loader, criterion, optimizer, epoch):
     if not masked_retrain:
         return
 
@@ -1015,7 +1019,7 @@ def combined_masked_retrain(args, ADMM, model, device, train_loader, optimizer, 
     masks = {}
 
     with open("./profile/" + args.config_file + ".yaml", "r") as stream:
-        raw_dict = yaml.load(stream)
+        raw_dict = yaml.safe_load(stream)
         prune_ratios = raw_dict['prune_ratios']
     for i, (name, W) in enumerate(model.named_parameters()):
         if name not in ADMM.prune_ratios:
@@ -1034,7 +1038,7 @@ def combined_masked_retrain(args, ADMM, model, device, train_loader, optimizer, 
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.cross_entropy(output, target)
+        loss = criterion(output, target)
 
         loss.backward()
 
@@ -1049,21 +1053,17 @@ def combined_masked_retrain(args, ADMM, model, device, train_loader, optimizer, 
             print("({}) ({}) cross_entropy loss: {}".format(args.sparsity_type, args.optimizer, loss))
             print('re-Train Epoch: {} [{}/{} ({:.0f}%)] [lr: {}]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(train_loader.dataset),
                        100. * batch_idx / len(train_loader), current_lr, loss.item()))
-
         if batch_idx % 10 == 0:
             idx_loss_dict[batch_idx] = loss.item()
-
-        # test_filter_sparsity(model)
-
-
-        # test_sparsity(ADMM, model)
     return idx_loss_dict
 
 
-def masked_retrain(args, ADMM, model, device, train_loader, optimizer, epoch):
+def masked_retrain(args, ADMM, model, device, train_loader, criterion, optimizer, epoch):
     if not masked_retrain:
         return
 
+    correct = 0
+    total = 0
     idx_loss_dict = {}
 
     model.train()
@@ -1079,30 +1079,42 @@ def masked_retrain(args, ADMM, model, device, train_loader, optimizer, epoch):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.cross_entropy(output, target)
+        loss = criterion(output, target)
 
         loss.backward()
 
         for i, (name, W) in enumerate(model.named_parameters()):
             if (name in masks) and ("classifier" not in name):
                 W.grad *= masks[name]
-                # print("-----")
-                # print(name)
-                # print(W.grad.shape, type(W.grad))
-                # print(masks[name].shape, type(masks[name].grad))
-                # print("-----")
 
         optimizer.step()
-        if batch_idx % args.print_freq == 0:
-            for param_group in optimizer.param_groups:
-                current_lr = param_group['lr']
-            print("({}) cross_entropy loss: {}".format(args.sparsity_type, loss))
-            print('re-Train Epoch: {} [{}/{} ({:.0f}%)] [{}]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(train_loader.dataset),
-                       100. * batch_idx / len(train_loader), current_lr, loss.item()))
 
+        _, predicted = output.max(1)
+        total += target.size(0)
+        correct += predicted.eq(target).sum().item()
+
+        # if batch_idx % args.print_freq == 0:
+        #     for param_group in optimizer.param_groups:
+        #         current_lr = param_group['lr']
+        #     print("({}) cross_entropy loss: {}".format(args.sparsity_type, loss))
+        #     print('re-Train Epoch: {} [{}/{} ({:.0f}%)] [{}]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(train_loader.dataset),
+        #                100. * batch_idx / len(train_loader), current_lr, loss.item()))
+
+        for param_group in optimizer.param_groups:
+            current_lr = param_group['lr']
+
+        if batch_idx % args.print_freq == 0:
+
+            print('Retrain Epoch: {}/{} [{}/{} ({:.0f}%)] Loss: {:.6f} | Acc: {:.3f} ({:.0f}/{:.0f})'.format(epoch, args.retrain_epoch,
+                                                                                    batch_idx * len(data), len(train_loader.dataset),
+                                                                                    100. * batch_idx / len(train_loader), 
+                                                                                    loss.item(),
+                                                                                    100.*correct/total, correct, total)
+                                                                                )
+            print("({}) cross_entropy loss: {:.6f}, current lr: {:.6f}".format(args.sparsity_type, loss, current_lr))
         if batch_idx % 1 == 0:
             idx_loss_dict[batch_idx] = loss.item()
 
-        # test_sparsity(ADMM, model)
-    # admm.test_sparsity(ADMM, model)
+    if has_wandb and args.enable_wandb:
+        wandb.log({"retrain_train_acc": 100.*correct/total})
     return idx_loss_dict
