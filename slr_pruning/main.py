@@ -318,7 +318,10 @@ def main():
     if args.evaluate:
         print("\n---------------> Loading model file...")
         print("!!! Loaded File: ", args.evaluate)
-        ckpt = torch.load(args.evaluate)["state_dict"]
+        try:
+            ckpt = torch.load(args.evaluate)["state_dict"]
+        except:
+            ckpt = torch.load(args.evaluate)
         try:
             model.load_state_dict(ckpt)
         except:
