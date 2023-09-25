@@ -52,6 +52,10 @@ python3 main.py --optimization savlr --masked-retrain --admmtrain-acc 76.08 --co
 - Parameter for SLR and ADMM both
     - admmtrain-acc: SLR/ADMM trained best acc for saved model
 
+### Step 3: check trained model
+```bash
+python3 main.py --evaluate <PATH of model>
+```
 
 **Run detail: check run.sh**
 
